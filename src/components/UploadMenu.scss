@@ -1,0 +1,32 @@
+.modal-header{
+    .close{
+        margin: -1rem -1rem -1rem -1rem !important;
+
+    }
+}
+.select-local-file-button {
+    // height: 40px;
+    width: 20% !important;
+    background: #008f5f;
+    color: white;
+    border-radius: 0px !important;
+    padding: 1.5% 2%;
+    margin-top: 2%;
+    &:hover {
+            background-color: #008f5f !important;
+      }
+  }
+
+.button-text {
+    font-family: "Segoe UI";
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.modal-content {
+    // background-color: #b9fae4 !important;
+}
+
+.file-upload-section  {
+    background-color: #b4fbe4 !important;
+}
