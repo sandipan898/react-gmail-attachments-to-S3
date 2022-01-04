@@ -9,6 +9,7 @@ import "ag-grid-community/dist/styles/ag-theme-fresh.css";
 import "ag-grid-community";
 import { makeStyles } from "@material-ui/core/styles";
 import * as AWS from "aws-sdk";
+import { Buffer } from 'buffer';
 
 import {
     getAuthStatus,
@@ -79,14 +80,13 @@ const UploadMenu = (props) => {
     const [filterNameParam, setFilterNameParam] = React.useState([]);
     const [isFilterApplied, setIsFilterApplied] = React.useState(false);
     const [filteredData, setFilteredData] = React.useState([]);
-    // eslint-disable-next-line no-unused-vars
     const [loader, setLoader] = React.useState(false);
     const defaultColDef = { resizable: true, filter: true };
     const acceptSingle = props.acceptSingle || false;
     // const AwsService = new UploadMenuHelperAwsService();
 
-    const folderName = process.env.REACT_APP_GMAIL_INGESTION_BUCKET || '';
-    const bucketName = process.env.REACT_APP_BUCKET_INPUT_FOLDER || '';
+    const bucketName = process.env.REACT_APP_GMAIL_INGESTION_BUCKET || '';
+    const folderName = process.env.REACT_APP_BUCKET_INPUT_FOLDER || '';
 
     const classes = useStyles();
 
@@ -217,6 +217,10 @@ const UploadMenu = (props) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [files]);
 
+    // useEffect(() => {
+
+    // }, [rowData])
+
     useEffect(() => {
         // console.log("printing the event on call upload ", "DemoUser1" + new Date());
         // console.log("this is event", files);
@@ -226,21 +230,27 @@ const UploadMenu = (props) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [droppedFile]);
 
-    const uploadFile = async () => {
+    const processName = (filename) => {
+        let nameParts = filename.split(" ");
+        let processedName = nameParts.join("_");
+        return processedName;
+    }
+
+    const handleUploadFile = async () => {
         console.log("uploadFile selectedAttachments>> ", selectedAttachments, selected);
-        let timeStamp = Number(new Date());
-        let dateTime = new Date(timeStamp).toGMTString();
         setLoader(true);
         let promiseArray = [];
-        selected.forEach((file) => {
+        selected.forEach(async (file) => {
             let name = file.filename.substring(0,
                 file.filename.lastIndexOf(".")
             );
+            let processedFilename = processName(name)
+
             let base64FileAttachment = "",
                 fileType = "";
             //for gmail attachments
             if (showOptions === 1) {
-                base64FileAttachment = getAttachment(
+                base64FileAttachment = await getAttachment(
                     file.body.attachmentId,
                     file.messageId
                 );
@@ -252,16 +262,16 @@ const UploadMenu = (props) => {
                 fileType = file.contentType.split("/")[1];
             }
 
-            console.log("base64FileAttachment", base64FileAttachment)
-
-            // promiseArray.push(
-                // uploadFileToS3(
-                //     file,
-                //     fileType,
-                //     folderName,
-                //     `${bucketName}/` + file.title
-                // )
-            // );
+            promiseArray.push(
+                uploadFileToS3(
+                    file,
+                    fileType,
+                    base64FileAttachment,
+                    bucketName,
+                    `${folderName}/` + processedFilename,
+                    // file.filename
+                )
+            );
         });
 
         Promise.all(promiseArray)
@@ -275,45 +285,115 @@ const UploadMenu = (props) => {
             });
     };
 
-    // const uploadFileToS3 = (file, url, fileExtension, mimeType, bucket, key) => {
-    //     try {
-    //         let adBucketName = process.env.REACT_APP_ANALYZE_DOCUMENTS_BUCKET;
-    //         let adFolderName = `${process.env.REACT_APP_BUCKET_INPUT_FOLDER}/${dateTime}`;
-    //         await AwsService.uploadBase64FileToS3(
-    //             adBucketName,
-    //             adFolderName,
-    //             base64FileAttachment,
-    //             name,
-    //             fileType
-    //         )
-    //             .then(async (res) => {
-    //                 alert(
-    //                     `Document - ${attachment.filename} uploaded successfully. Processing started... Please wait...`,
-    //                     3000
-    //                 );
-    //             })
-    //             .catch((error) => {
-    //                 setLoader(false);
-    //                 console.log(
-    //                     "some error occured while file upload >> ",
-    //                     error
-    //                 );
-    //                 alert(
-    //                     `Some error occured while uploading Document - ${attachment.filename}`,
-    //                     2500
-    //                 );
-    //             });
+    const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+        const byteCharacters = atob(b64Data);
+        const byteArrays = [];
 
-    //     } catch (error) {
-    //         setLoader(false);
-    //         console.log("some error occured while file upload >> ", error);
-    //         alert(
-    //             `Some error for Document - ${selectedAttachments[0].filename}`,
-    //             2500
-    //         );
-    //     }
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
 
-    // };
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+
+        const blob = new Blob(byteArrays, { type: contentType });
+        return blob;
+    }
+
+    const uploadFileToS3 = (file, fileType, base64FileString, bucket, key) => {
+        try {
+            // let timeStamp = Number(new Date());
+            // let dateTime = new Date(timeStamp).toGMTString();
+            let buf = Buffer.from(base64FileString, 'base64')
+            let blob = b64toBlob(base64FileString,fileType)
+            let url = `data:${fileType};base64,${base64FileString}`
+            console.log("uploadFileToS3", url);
+            return new Promise((resolve, reject) => {
+                if (AWS) {
+                    const s3 = new AWS.S3();
+                    // s3.upload(
+                    //     {
+                    //         Key: key + "." + fileType,
+                    //         Bucket: bucket,
+                    //         Body: buf,
+                    //         ACL: "private",
+                    //         ContentType: fileType,
+                    //         ContentEncoding: 'base64',
+                    //         //   Metadata: {
+                    //         //     "username": window.localStorage.getItem('loggedInUser')
+                    //         //   }
+                    //     },
+                    //     (err, data) => {
+                    //         if (err) {
+                    //             reject(err);
+                    //         } else {
+                    //             resolve(data);
+                    //         }
+                    //     }
+                    // );
+                    const params = {
+                        ContentType: blob.type,
+                        ContentLength: blob.size.toString(), // or response.header["content-length"] if available for the type of file downloaded
+                        Bucket: bucket,
+                        Body: blob,
+                        Key: key + "." + fileType
+                    };
+                    console.log("params >> ", params);
+                    return s3.putObject(params).promise();
+                } else {
+                    reject("Missing AWS Client");
+                }
+            });
+
+            // return fetch(url, {
+            //     method: "GET",
+            //     mode: "cors", // no-cors, *cors, same-origin
+            //     // credentials: "same-origin", // include, *same-origin, omit
+            //     headers: {
+            //       "Access-Control-Allow-Origin": '*',
+            //       "Access-Control-Allow-Credentials": true,
+            //       // "Access-Control-Request-Header":
+            //       //   "Origin, X-Requested-With, Content-Type, Accept",
+            //     //   Authorization: "Bearer " + authResponse.access_token
+            //       // "Content-Type": "application/json",
+            //       // Accept: "application/json"
+            //     }
+            //   })
+            //     .then((x) => {
+            //       console.log(x);
+            //       return x.blob();
+            //     })
+            //     .then((response) => {
+            //       console.log("response >> ", response);
+            //       const params = {
+            //         ContentType: response.type,
+            //         // ContentType: mimeType,
+            //         ContentLength: response.size.toString(), // or response.header["content-length"] if available for the type of file downloaded
+            //         Bucket: bucket,
+            //         Body: response,
+            //         Key: key + "." + fileType
+            //       };
+            //       console.log("params >> ", params);
+            //       const s3 = new AWS.S3();
+            //       return s3.putObject(params).promise();
+            //     })
+            //     .catch((err) => {
+            //       console.log("error fetching file from url ", err);
+            //     });
+        } catch (error) {
+            setLoader(false);
+            console.log("some error occured while file upload >> ", error);
+            alert(
+                `Some error for Document - ${file.filename}`,
+                2500
+            );
+        }
+    };
 
     const openAttachment = async (attachment) => {
         let pdfString = "";
@@ -374,7 +454,6 @@ const UploadMenu = (props) => {
     };
 
     const data = isFilterApplied ? filteredData : rowData
-    console.log("Final Data: ", data);
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
@@ -532,8 +611,7 @@ const UploadMenu = (props) => {
                                             <TableCell>Attachment Name</TableCell>
                                             <TableCell align="right">Date</TableCell>
                                             <TableCell align="right">File Type</TableCell>
-                                            {/* <TableCell align="right">Carbs&nbsp;(g)</TableCell> */}
-                                            {/* <TableCell align="right">Protein&nbsp;(g)</TableCell> */}
+                                            <TableCell align="right">Action</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -565,8 +643,7 @@ const UploadMenu = (props) => {
                                                     </TableCell>
                                                     <TableCell align="right">{row.date.getFullYear()}/{row.date.getMonth() + 1}/{row.date.getDate()}</TableCell>
                                                     <TableCell align="right">{row.mimeType}</TableCell>
-                                                    {/* <TableCell align="right">{row.carbs}</TableCell> */}
-                                                    {/* <TableCell align="right">{row.protein}</TableCell> */}
+                                                    <TableCell align="right"><button onClick={() => openAttachment(row)}>View</button></TableCell>
                                                 </TableRow>
                                             )
                                         })}
@@ -588,7 +665,7 @@ const UploadMenu = (props) => {
                     null
             }
 
-            <Button onClick={uploadFile}>Migrate to S3</Button>
+            <Button onClick={handleUploadFile}>Migrate to S3</Button>
         </div >
     );
 };

@@ -40,10 +40,10 @@ const initClient = () => {
     scope: SCOPES
   }).then(() => {
     // Listen for sign-in state changes.
-    //window.gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+    // window.gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
     // Handle the initial sign-in state.
-    //updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+    // updateSigninStatus(window.gapi.auth2.getAuthInstance().isSignedIn.get());
     //authorizeButton.onclick = handleAuthClick;
     //signoutButton.onclick = handleSignoutClick;
 
@@ -51,6 +51,17 @@ const initClient = () => {
     console.log(error)
   });
 }
+
+// const updateSigninStatus = (isSignedIn) => {
+//   if (isSignedIn) {
+//     setOauthToken(window.gapi.auth.getToken().access_token)
+//     setSignedInUser(window.gapi.auth2.getAuthInstance().currentUser.le.wt);
+//     // listFiles();
+//   } else {
+//     // prompt user to sign in
+//     handleAuthClick();
+//   }
+// };
 
 //--------------------all function exports-------------------------*
 /**
@@ -144,7 +155,7 @@ export const getAttachment = async (attachmentId, messageId) => {
         'id': attachmentId
       }
     )
-    console.log("Attachment", attachResp.result)
+    // console.log("Attachment", attachResp.result)
     //Format base64 string
     let base64 = (attachResp.result.data).replace(/_/g, '/');
     base64 = base64.replace(/-/g, '+');
