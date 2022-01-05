@@ -291,9 +291,9 @@ const UploadMenu = (props) => {
                             ACL: "private",
                             ContentType: `application/${fileType}`,
                             ContentEncoding: 'base64',
-                              Metadata: {
-                                "username": window.localStorage.getItem('loggedInUser')
-                              }
+                            // Metadata: {
+                            //     "username": window.localStorage.getItem('loggedInUser')
+                            // }
                         },
                         (err, data) => {
                             console.log("data after upload", data);
@@ -319,36 +319,6 @@ const UploadMenu = (props) => {
                     reject("Missing AWS Client");
                 }
             });
-            // method 3
-            // return fetch(url, {
-            //     method: "GET",
-            //     mode: "cors", // no-cors, *cors, same-origin
-            //     headers: {
-            //       "Access-Control-Allow-Origin": '*',
-            //       "Access-Control-Allow-Credentials": true,
-            //     }
-            //   })
-            //     .then((x) => {
-            //       console.log("x", x);
-            //       return x.blob();
-            //     })
-            //     .then((response) => {
-            //       console.log("response >> ", response);
-            //       const params = {
-            //         ContentType: fileType,
-            //         // ContentType: mimeType,
-            //         ContentLength: response.size.toString(), // or response.header["content-length"] if available for the type of file downloaded
-            //         Bucket: bucket,
-            //         Body: response,
-            //         Key: key + "." + fileType
-            //       };
-            //       console.log("params >> ", params);
-            //       const s3 = new AWS.S3();
-            //       return s3.putObject(params).promise();
-            //     })
-            //     .catch((err) => {
-            //       console.log("error fetching file from url ", err);
-            //     });
         } catch (error) {
             setLoader(false);
             console.log("some error occured while file upload >> ", error);
@@ -618,7 +588,10 @@ const UploadMenu = (props) => {
                     null
             }
 
-            <Button onClick={handleUploadFile}>Migrate to S3</Button>
+            {data && data.length ? 
+                <Button style={{padding: "10px", margin: "10px"}} onClick={handleUploadFile}>Migrate to S3</Button>
+                : null
+            }
         </div >
     );
 };

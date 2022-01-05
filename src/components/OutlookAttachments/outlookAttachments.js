@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
         width: '100%'
     },
     microsoftBtn: {
-        height: "39px",
+        height: "45px",
         backgroundColor: "#cfe5f6",
         borderRadius: "2px",
         boxShadow: "0 3px 4px 0 rgba(0,0,0,.25)",
@@ -46,10 +46,10 @@ const useStyles = makeStyles((theme) => ({
         }
     },
     microsoftIconrapper: {
-        marginTop: "1px",
+        marginTop: "2px",
         marginLeft: "1px",
-        width: "40px",
-        height: "37px",
+        width: "35px",
+        height: "35px",
         display: "flex",
         borderRadius: "2px",
         padding: "0% 4% 3% 0",
@@ -57,8 +57,8 @@ const useStyles = makeStyles((theme) => ({
     },
     btnText: {
         margin: "auto",
-        color: "#222",
-        fontSize: "12.5px",
+        // color: "#fff",
+        fontSize: "13.5px",
         letterSpacing: "0.2px",
         fontFamily: "Segoe UI",
         fontWeight: '500',
@@ -66,7 +66,11 @@ const useStyles = makeStyles((theme) => ({
     },
     microsoftIcon: {
         fontSize: "1.5rem",
-        margin: "0.3rem 0.45rem 0.3rem 0.55rem"
+        // margin: "0.3rem 0.45rem 0.3rem 0.55rem"
+        marginTop: "9px",
+        marginLeft: "10px",
+        width: "18px",
+        height: "15px"
     }
 
 }));

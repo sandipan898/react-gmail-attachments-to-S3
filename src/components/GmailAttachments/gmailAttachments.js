@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
     width: '100%'
   },
   googleBtn: {
-    height: "39px",
+    height: "45px",
     backgroundColor: "#4285f4",
     borderRadius: "2px",
     boxShadow: "0 3px 4px 0 rgba(0,0,0,.25)",
@@ -51,20 +51,20 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   googleIconWrapper: {
-    marginTop: "1px",
+    marginTop: "2px",
     marginLeft: "1px",
-    width: "40px",
-    height: "37px",
+    width: "35px",
+    height: "35px",
     display: "flex",
     borderRadius: "2px",
     padding: "0% 4% 3% 0",
     backgroundColor: "#fff"
   },
   googleIcon: {
-    marginTop: "11px",
+    marginTop: "13px",
     marginLeft: "11px",
     width: "18px",
-    height: "18px"
+    height: "15px"
   },
   btnText: {
     margin: "auto",
