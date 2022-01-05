@@ -285,93 +285,108 @@ const UploadMenu = (props) => {
             });
     };
 
-    const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+    const b64toBlob = (b64Data, contentType = '', sliceSize = 512, dataURI) => {
         const byteCharacters = atob(b64Data);
-        const byteArrays = [];
+        // let buf = Buffer.from(b64Data, 'base64') 
+        // const byteCharacters = buf.toString('base64')
+        // console.log("buf", byteCharacters)
+        // const byteArrays = [];
+        // for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        //     const slice = byteCharacters.slice(offset, offset + sliceSize);
 
-        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            const slice = byteCharacters.slice(offset, offset + sliceSize);
+        //     const byteNumbers = new Array(slice.length);
+        //     for (let i = 0; i < slice.length; i++) {
+        //         byteNumbers[i] = slice.charCodeAt(i);
+        //     }
+        //     const byteArray = new Uint8Array(byteNumbers);
+        //     byteArrays.push(byteArray);
+        // }
+        // const blob = new Blob(byteArrays, { type: contentType });
+        // return blob;
+        
+        // var byteString = atob(dataURI.split(',')[1]);
+        // separate out the mime component
+        // var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
 
-            const byteNumbers = new Array(slice.length);
-            for (let i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
+        // write the bytes of the string to an ArrayBuffer
+        var ab = new ArrayBuffer(byteCharacters.length);
 
-            const byteArray = new Uint8Array(byteNumbers);
-            byteArrays.push(byteArray);
+        // create a view into the buffer
+        var ia = new Uint8Array(ab);
+
+        // set the bytes of the buffer to the correct values
+        for (var i = 0; i < byteCharacters.length; i++) {
+            ia[i] = byteCharacters.charCodeAt(i);
         }
 
-        const blob = new Blob(byteArrays, { type: contentType });
+        // write the ArrayBuffer to a blob, and you're done
+        var blob = new Blob([ab], {type: contentType});
         return blob;
     }
 
     const uploadFileToS3 = (file, fileType, base64FileString, bucket, key) => {
         try {
-            // let timeStamp = Number(new Date());
-            // let dateTime = new Date(timeStamp).toGMTString();
             let buf = Buffer.from(base64FileString, 'base64')
-            let blob = b64toBlob(base64FileString,fileType)
-            let url = `data:${fileType};base64,${base64FileString}`
-            console.log("uploadFileToS3", url);
+            // let url = `data:${fileType};base64,${base64FileString}`
+            // let blob = b64toBlob(base64FileString, fileType, url)
+            console.log("uploadFileToS3", buf, base64FileString);
             return new Promise((resolve, reject) => {
                 if (AWS) {
                     const s3 = new AWS.S3();
-                    // s3.upload(
-                    //     {
-                    //         Key: key + "." + fileType,
-                    //         Bucket: bucket,
-                    //         Body: buf,
-                    //         ACL: "private",
-                    //         ContentType: fileType,
-                    //         ContentEncoding: 'base64',
-                    //         //   Metadata: {
-                    //         //     "username": window.localStorage.getItem('loggedInUser')
-                    //         //   }
-                    //     },
-                    //     (err, data) => {
-                    //         if (err) {
-                    //             reject(err);
-                    //         } else {
-                    //             resolve(data);
-                    //         }
-                    //     }
-                    // );
-                    const params = {
-                        ContentType: blob.type,
-                        ContentLength: blob.size.toString(), // or response.header["content-length"] if available for the type of file downloaded
-                        Bucket: bucket,
-                        Body: blob,
-                        Key: key + "." + fileType
-                    };
-                    console.log("params >> ", params);
-                    return s3.putObject(params).promise();
+                    // method 1
+                    s3.upload(
+                        {
+                            Key: key + "." + fileType,
+                            Bucket: bucket,
+                            Body: buf,
+                            ACL: "private",
+                            ContentType: `application/${fileType}`,
+                            ContentEncoding: 'base64',
+                              Metadata: {
+                                "username": window.localStorage.getItem('loggedInUser')
+                              }
+                        },
+                        (err, data) => {
+                            console.log("data after upload", data);
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(data);
+                            }
+                        }
+                    );
+                // method 2
+                    // const params = {
+                    //     ContentType: blob.type.toString().contains('application') ? blob.type : `application/${blob.type}`,
+                    //     ContentLength: blob.size.toString(),
+                    //     ContentEncoding: 'base64',
+                    //     Bucket: bucket,
+                    //     Body: blob,
+                    //     Key: key + "." + fileType
+                    // };
+                    // console.log("params >> ", params);
+                    // return s3.putObject(params).promise();
                 } else {
                     reject("Missing AWS Client");
                 }
             });
-
+            // method 3
             // return fetch(url, {
             //     method: "GET",
             //     mode: "cors", // no-cors, *cors, same-origin
-            //     // credentials: "same-origin", // include, *same-origin, omit
             //     headers: {
             //       "Access-Control-Allow-Origin": '*',
             //       "Access-Control-Allow-Credentials": true,
-            //       // "Access-Control-Request-Header":
-            //       //   "Origin, X-Requested-With, Content-Type, Accept",
-            //     //   Authorization: "Bearer " + authResponse.access_token
-            //       // "Content-Type": "application/json",
-            //       // Accept: "application/json"
             //     }
             //   })
             //     .then((x) => {
-            //       console.log(x);
+            //       console.log("x", x);
             //       return x.blob();
             //     })
             //     .then((response) => {
             //       console.log("response >> ", response);
             //       const params = {
-            //         ContentType: response.type,
+            //         ContentType: fileType,
             //         // ContentType: mimeType,
             //         ContentLength: response.size.toString(), // or response.header["content-length"] if available for the type of file downloaded
             //         Bucket: bucket,
@@ -415,6 +430,46 @@ const UploadMenu = (props) => {
                         pdfString +
                         "'></iframe>"
                     );
+                    // window.open("data:" + attachment.mimeType + ";base64," + pdfString)
+                }, 100);
+            }
+        } else if (showOptions === 2) {
+            pdfString = attachment.contentBytes;
+            let pdfWindow = window.open("");
+            setTimeout(() => {
+                pdfWindow.document.write(
+                    "<iframe width='100%' height='100%' src='data:" +
+                    attachment.contentType +
+                    ";base64," +
+                    pdfString +
+                    "'></iframe>"
+                );
+            }, 100);
+        }
+        console.log("pdfstring>>", pdfString);
+    };
+
+    const downloadAttachment = async (attachment) => {
+        let pdfString = "";
+        if (showOptions === 1) {
+            pdfString = await getAttachment(
+                attachment.body.attachmentId,
+                attachment.messageId
+            );
+            if (pdfString === "Error") {
+                alert(`Couldn't fetch attachment!`, 3000);
+                return;
+            } else {
+                // let pdfWindow = window.open("");
+                setTimeout(() => {
+                    // pdfWindow.document.write(
+                    //     "<iframe width='100%' height='100%' src='data:" +
+                    //     attachment.mimeType +
+                    //     ";base64," +
+                    //     pdfString +
+                    //     "'></iframe>"
+                    // );
+                    window.open("data:" + attachment.mimeType + ";base64," + pdfString);
                 }, 100);
             }
         } else if (showOptions === 2) {
@@ -643,7 +698,10 @@ const UploadMenu = (props) => {
                                                     </TableCell>
                                                     <TableCell align="right">{row.date.getFullYear()}/{row.date.getMonth() + 1}/{row.date.getDate()}</TableCell>
                                                     <TableCell align="right">{row.mimeType}</TableCell>
-                                                    <TableCell align="right"><button onClick={() => openAttachment(row)}>View</button></TableCell>
+                                                    <TableCell align="right">
+                                                        <button onClick={() => openAttachment(row)}>View</button>
+                                                        <button onClick={() => downloadAttachment(row)}>Download</button>
+                                                    </TableCell>
                                                 </TableRow>
                                             )
                                         })}

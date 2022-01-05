@@ -155,7 +155,7 @@ export const getAttachment = async (attachmentId, messageId) => {
         'id': attachmentId
       }
     )
-    // console.log("Attachment", attachResp.result)
+    console.log("Attachment", attachResp.result)
     //Format base64 string
     let base64 = (attachResp.result.data).replace(/_/g, '/');
     base64 = base64.replace(/-/g, '+');
