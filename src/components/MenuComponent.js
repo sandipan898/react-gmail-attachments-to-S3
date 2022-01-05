@@ -101,8 +101,6 @@ const UploadMenu = (props) => {
     const [files, setFiles] = React.useState([]);
     const [droppedFile, setDroppedFile] = React.useState([]);
 
-    const [order, setOrder] = React.useState('asc');
-    const [orderBy, setOrderBy] = React.useState('calories');
     const [selected, setSelected] = React.useState([]);
     const [page, setPage] = React.useState(0);
     const [dense, setDense] = React.useState(false);
@@ -202,33 +200,6 @@ const UploadMenu = (props) => {
             setSelectedAttachments(selectedRows);
         }
     };
-    useEffect(() => {
-        // console.log("printing the event on call upload ", "DemoUser1" + new Date());
-        // console.log("this is event", files);
-        if (files.length === 1) {
-            setDroppedFile(files[0]);
-
-            // uploadFile(files[0]);
-        } else {
-            console.log(
-                "Either files length is 0 or more than 1 , Please select 1 file only!!"
-            );
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [files]);
-
-    // useEffect(() => {
-
-    // }, [rowData])
-
-    useEffect(() => {
-        // console.log("printing the event on call upload ", "DemoUser1" + new Date());
-        // console.log("this is event", files);
-        if (Object.keys(droppedFile).length !== 0)
-            // uploadFile(droppedFile);
-            console.log("droppedFile", droppedFile);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [droppedFile]);
 
     const processName = (filename) => {
         let nameParts = filename.split(" ");
@@ -241,13 +212,10 @@ const UploadMenu = (props) => {
         setLoader(true);
         let promiseArray = [];
         selected.forEach(async (file) => {
-            let name = file.filename.substring(0,
-                file.filename.lastIndexOf(".")
-            );
+            let name = file.filename.substring(0, file.filename.lastIndexOf("."));
             let processedFilename = processName(name)
 
-            let base64FileAttachment = "",
-                fileType = "";
+            let base64FileAttachment = "", fileType = "";
             //for gmail attachments
             if (showOptions === 1) {
                 base64FileAttachment = await getAttachment(
@@ -261,7 +229,6 @@ const UploadMenu = (props) => {
                 base64FileAttachment = file.contentBytes;
                 fileType = file.contentType.split("/")[1];
             }
-
             promiseArray.push(
                 uploadFileToS3(
                     file,
@@ -269,7 +236,6 @@ const UploadMenu = (props) => {
                     base64FileAttachment,
                     bucketName,
                     `${folderName}/` + processedFilename,
-                    // file.filename
                 )
             );
         });
@@ -286,24 +252,7 @@ const UploadMenu = (props) => {
     };
 
     const b64toBlob = (b64Data, contentType = '', sliceSize = 512, dataURI) => {
-        const byteCharacters = atob(b64Data);
-        // let buf = Buffer.from(b64Data, 'base64') 
-        // const byteCharacters = buf.toString('base64')
-        // console.log("buf", byteCharacters)
-        // const byteArrays = [];
-        // for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-        //     const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-        //     const byteNumbers = new Array(slice.length);
-        //     for (let i = 0; i < slice.length; i++) {
-        //         byteNumbers[i] = slice.charCodeAt(i);
-        //     }
-        //     const byteArray = new Uint8Array(byteNumbers);
-        //     byteArrays.push(byteArray);
-        // }
-        // const blob = new Blob(byteArrays, { type: contentType });
-        // return blob;
-        
+        const byteCharacters = atob(b64Data);        
         // var byteString = atob(dataURI.split(',')[1]);
         // separate out the mime component
         // var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
@@ -449,45 +398,6 @@ const UploadMenu = (props) => {
         console.log("pdfstring>>", pdfString);
     };
 
-    const downloadAttachment = async (attachment) => {
-        let pdfString = "";
-        if (showOptions === 1) {
-            pdfString = await getAttachment(
-                attachment.body.attachmentId,
-                attachment.messageId
-            );
-            if (pdfString === "Error") {
-                alert(`Couldn't fetch attachment!`, 3000);
-                return;
-            } else {
-                // let pdfWindow = window.open("");
-                setTimeout(() => {
-                    // pdfWindow.document.write(
-                    //     "<iframe width='100%' height='100%' src='data:" +
-                    //     attachment.mimeType +
-                    //     ";base64," +
-                    //     pdfString +
-                    //     "'></iframe>"
-                    // );
-                    window.open("data:" + attachment.mimeType + ";base64," + pdfString);
-                }, 100);
-            }
-        } else if (showOptions === 2) {
-            pdfString = attachment.contentBytes;
-            let pdfWindow = window.open("");
-            setTimeout(() => {
-                pdfWindow.document.write(
-                    "<iframe width='100%' height='100%' src='data:" +
-                    attachment.contentType +
-                    ";base64," +
-                    pdfString +
-                    "'></iframe>"
-                );
-            }, 100);
-        }
-        console.log("pdfstring>>", pdfString);
-    };
-
     const changeHandler = (e) => {
         //console.log(e.target.value);
         let nameParam = e.target.value;
@@ -502,13 +412,12 @@ const UploadMenu = (props) => {
             setIsFilterApplied(true);
         }
     };
+
     const callUpload = (event) => {
         const files = event.target.files;
         setFiles(files);
         document.getElementById("getFile").click();
     };
-
-    const data = isFilterApplied ? filteredData : rowData
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
@@ -558,9 +467,9 @@ const UploadMenu = (props) => {
     // Avoid a layout jump when reaching the last page with empty rows.
     const emptyRows =
         page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rowData.length) : 0;
-
-    console.log("Selected", selected);
-
+    
+    const data = isFilterApplied ? filteredData : rowData
+    
     return (
         <div>
 
@@ -631,22 +540,9 @@ const UploadMenu = (props) => {
                                         frameworkComponents={frameworkComponents}
                                     />
                                 </React.Fragment> */}
-                                {/* <>
-                                    <DataGrid
-                                        rows={isFilterApplied ? filteredData : rowData}
-                                        columns={columnDefs}
-                                        pageSize={5}
-                                        rowsPerPageOptions={[5]}
-                                        checkboxSelection
-                                    />
-                                </> */}
                             </>
                             )
                             : null}
-                        {/* {data.map(({ partId, mimeType, filename, headers, body, date, messageId }) => (
-                            <div key={body.attachmentId}>{filename}</div>
-
-                        ))} */}
                         <Paper>
                             <TableContainer component={Paper}>
                                 <Table sx={{ minWidth: 650 }} aria-label="simple table" checkboxSelection>
@@ -700,7 +596,6 @@ const UploadMenu = (props) => {
                                                     <TableCell align="right">{row.mimeType}</TableCell>
                                                     <TableCell align="right">
                                                         <button onClick={() => openAttachment(row)}>View</button>
-                                                        <button onClick={() => downloadAttachment(row)}>Download</button>
                                                     </TableCell>
                                                 </TableRow>
                                             )
