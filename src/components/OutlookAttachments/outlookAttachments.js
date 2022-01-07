@@ -109,7 +109,6 @@ const OutlookAttachments = (props) => {
         }
     }
 
-
     return (
         <div style={{ padding: "10px", display: 'contents', alignItems: 'center', justifyContent: 'center' }}>
             {
@@ -131,7 +130,8 @@ const OutlookAttachments = (props) => {
                         </div>
                         <p className={classes.btnText}>Authorize from Outlook</p>
 
-                    </div>}
+                    </div>
+                }
         </div>
     );
 }

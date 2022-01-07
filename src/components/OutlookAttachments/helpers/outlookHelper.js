@@ -1,6 +1,5 @@
 import * as Msal from "msal";
 var graph = require('@microsoft/microsoft-graph-client');
-
     const msalConfig = {
         auth: {
             clientId: process.env.REACT_APP_MICROSOFT_CLIENT_ID,
@@ -11,8 +10,7 @@ var graph = require('@microsoft/microsoft-graph-client');
             storeAuthStateInCookie: true
         }
     };
-
-    const scopes = ["User.Read","Mail.ReadWrite"];
+    const scopes = ["User.Read","Mail.ReadWrite", "mailboxsettings.read"];
 
 class OutlookHelper {
     constructor(locationPath){

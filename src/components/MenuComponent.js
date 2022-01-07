@@ -208,6 +208,11 @@ const UploadMenu = (props) => {
     }
 
     const handleUploadFile = async () => {
+        if (selected.length) {
+            alert("No files selected for migration! Select some files first!");
+            return;
+        }
+
         console.log("uploadFile selectedAttachments>> ", selectedAttachments, selected);
         setLoader(true);
         let promiseArray = [];
@@ -439,6 +444,7 @@ const UploadMenu = (props) => {
         page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rowData.length) : 0;
     
     const data = isFilterApplied ? filteredData : rowData
+    console.log("data", data);
     
     return (
         <div>
@@ -541,7 +547,7 @@ const UploadMenu = (props) => {
                                             const labelId = `enhanced-table-checkbox-${index}`;
                                             return (
                                                 <TableRow
-                                                    key={row.body.attachmentId}
+                                                    key={row.body && row.body.attachmentId ? row.body.attachmentId : row.id}
                                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                                     hover
                                                     onClick={(event) => handleClick(event, row)}
